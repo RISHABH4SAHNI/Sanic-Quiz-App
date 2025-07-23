@@ -2,6 +2,7 @@ from sanic import Blueprint, Request, response
 from app.models.quiz import Quiz
 from app.models.user import User
 from app.models.question import Question, Option
+from app.utils.quiz_formatter import display_quiz
 
 bp = Blueprint("quiz", url_prefix="/quiz")
 
@@ -37,3 +38,52 @@ async def publish_quiz(request: Request, quiz_id: int):
 async def delete_quiz(request: Request, quiz_id: int):
     await Quiz.filter(id=quiz_id).delete()
     return response.json({"msg": "deleted"})
+
+@bp.get("/display")
+async def display_quizzes(request: Request):
+    user_id = request.args.get("user_id")
+
+    if not user_id:
+        return response.json({"error": "Missing user_id in query params"}, status=400)
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return response.json({"error": "Invalid user_id"}, status=400)
+
+    quizzes = await Quiz.filter(owner_id=user_id).all()
+
+    return response.json([
+        {
+            "id": quiz.id,
+            "title": quiz.title,
+            "is_published": quiz.is_published
+        }
+        for quiz in quizzes
+    ])
+
+@bp.get("/user")
+async def user_quiz(request: Request):
+    user_id = int(request.args.get("user_id"))
+    quizzes = await Quiz.filter(owner_id=user_id).prefetch_related("questions")
+
+    result = [
+        {
+            "id": quiz.id,
+            "title": quiz.title,
+        }
+        for quiz in quizzes
+    ]
+    return response.json({"quizzes": result})
+
+@bp.get("/user/<quiz_id:int>")
+async def user_quiz_details(request: Request, quiz_id: int):
+    user_id = int(request.args.get("user_id"))
+    quiz = await Quiz.get_or_none(id=quiz_id, owner_id=user_id).prefetch_related(
+        "questions__options", "owner"
+    )
+
+    if not quiz:
+        return response.json({"error": "Quiz not found"}, status=404)
+
+    return response.json(display_quiz(quiz))
