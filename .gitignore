@@ -1,4 +1,35 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
+
+# macOS
 .DS_Store
+
+# dotenv
 .env
+.env.*
+
+# Virtual environments
+venv/
+ENV/
+env/
+sanicenv/
+.sanicenv/
+
+# VS Code
+.vscode/
+
+# Database
+*.sqlite3
+*.db
+
+# Unit test / coverage reports
+.coverage
+.pytest_cache/
+.mypy_cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
