@@ -3,6 +3,7 @@ from app.models.quiz import Quiz
 from app.models.user import User
 from app.models.question import Question, Option
 from app.utils.quiz_formatter import display_quiz
+from app.utils.auth import protected
 
 bp = Blueprint("quiz", url_prefix="/quiz")
 
@@ -63,6 +64,7 @@ async def display_quizzes(request: Request):
     ])
 
 @bp.get("/user")
+@protected
 async def user_quiz(request: Request):
     user_id = int(request.args.get("user_id"))
     quizzes = await Quiz.filter(owner_id=user_id).prefetch_related("questions")
@@ -77,6 +79,7 @@ async def user_quiz(request: Request):
     return response.json({"quizzes": result})
 
 @bp.get("/user/<quiz_id:int>")
+@protected
 async def user_quiz_details(request: Request, quiz_id: int):
     user_id = int(request.args.get("user_id"))
     quiz = await Quiz.get_or_none(id=quiz_id, owner_id=user_id).prefetch_related(
